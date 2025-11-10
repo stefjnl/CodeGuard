@@ -2,8 +2,34 @@ using AICodeReviewer.Web.Hubs;
 using AICodeReviewer.Web.Domain.Interfaces;
 using AICodeReviewer.Web.Infrastructure.Services;
 using AICodeReviewer.Web.Application.Factories;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load .env file if it exists (for local development)
+var envPath = Path.Combine(Directory.GetParent(builder.Environment.ContentRootPath)?.FullName ?? builder.Environment.ContentRootPath, ".env");
+if (File.Exists(envPath))
+{
+    Env.Load(envPath);
+}
+else
+{
+    Console.WriteLine($"[DEBUG] .env file not found at: {envPath}");
+}
+
+// Add environment variables to configuration
+builder.Configuration.AddEnvironmentVariables();
+
+// Map OPENROUTER_API_KEY from .env to OpenRouter:ApiKey configuration
+var openRouterApiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
+if (!string.IsNullOrEmpty(openRouterApiKey))
+{
+    builder.Configuration["OpenRouter:ApiKey"] = openRouterApiKey;
+}
+else
+{
+    Console.WriteLine($"[DEBUG] OPENROUTER_API_KEY not found in environment variables");
+}
 
 // Add services to the container.
 builder.Services.AddControllersWithViews(options =>
